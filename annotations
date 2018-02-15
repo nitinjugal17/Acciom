@@ -1,0 +1,49 @@
+
+Data:
+
+@sourcePrimaryKey --
+@sourcedbType --
+@sourcedb --
+@sourceServer --
+@sourceQuery --
+@sourceTable --
+@sourceColumn --
+
+
+@targetPrimaryKey --
+@targetdbType --
+@targetQuery --
+@targetdb --
+@targetServer --
+@targetTable --
+@targetColumn -- should always be passed as a list
+
+@excludeColumns -- should always be passed as a list
+
+Test Class:
+
+CountCheck -- direct data comparison with source and target db
+DataValidation -- exact data on both table
+DuplicateCheck -- always happen on the target db ,
+   make sure you are passing column_names(exclude or include )as list[]
+DDLCheck -- can't find a proper solution , Need to be implemented
+LoadStrategy -- need to have more clarity , Need to be implemented
+NullCheck --
+
+assumed:
+testcase id never changes , hence creating results with testcase_id_results.xslx
+"Test Case ID" as a column name is what program search to display testcases ids's for selection
+
+
+prerequisites:
+
+xlrd
+wxpython
+pandas
+sqlalchemy
+openpyxl
+
+
+Oracle
+Mssql
+Mysql

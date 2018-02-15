@@ -1,0 +1,11 @@
+serverName=localhost
+databaseType=postgres
+port=5433
+userName=postgres
+passWord=postgres
+
+serverName=localhost2
+databaseType=postgres
+port=5433
+userName=postgres
+passWord=postgres
