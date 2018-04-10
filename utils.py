@@ -24,6 +24,9 @@ import wx
 from os import path
 import re
 from openpyxl import load_workbook
+from openpyxl.styles.differential import DifferentialStyle
+from openpyxl.styles import Color, PatternFill, Font, Border
+from openpyxl.formatting.rule import Rule
 import datetime
 import urllib
 
@@ -41,6 +44,7 @@ class App():
 
     def testclass_selection(self, test_data):
         try:
+
             for key, value in test_data.iteritems():
                 self.testcase_id = key
                 self.source_df, self.target_df, self.source_meta, self.target_meta = self.create_datasource(self.testcase_id)
@@ -89,7 +93,7 @@ class App():
                             self.update_result(self.testcase_id, override='FAIL')
                             print "{} Executed and Results as FAIL Updated ".format(self.testcase_id)
                     else:
-                        self.targetColumn = self.select_columns(self.excludeColumns,self.testClass)
+                        self.targetColumn = self.select_columns(self.excludeColumns, self.testClass)
                         if self.check_duplicates(self.targetColumn, self.testcase_id, 'target'):
                             if self.update_result(self.testcase_id, override='PASS'):
                                 print "{} Executed and Results as PASS Updated ".format(self.testcase_id)
@@ -172,7 +176,6 @@ class App():
         df['Test Case'] = df_testcases['Test Case ID'].astype(str) + '_' + df_testcases['Test Class']
         test_list = df['Test Case']
 
-
         frame.Bind(wx.EVT_BUTTON, self.OnSelectAll, id=sel.GetId())
         frame.Bind(wx.EVT_BUTTON, self.OnDeselectAll, id=des.GetId())
 
@@ -186,6 +189,7 @@ class App():
             print "You chose TestCases:" + str(strings)
 
             self.create_results_sheet(strings)
+            print selections
             return selections
 
     def select_sheet(self, sheet_list):
@@ -209,12 +213,27 @@ class App():
         try:
             print self.test_data[testcase_id]
             if self.test_data[testcase_id]:
+                if 'sourcePrimaryKey' in self.test_data[testcase_id]:
+                    self.sourcePrimaryKey = self.test_data[testcase_id]['sourcePrimaryKey']
+                else:
+                    self.sourcePrimaryKey = ''
+                if 'sourcedbType' in self.test_data[testcase_id]:
+                    self.sourcedbType = self.test_data[testcase_id]['sourcedbType']
+                else:
+                    self.sourcedbType = ''
+                if 'sourcedb' in self.test_data[testcase_id]:
+                    self.sourcedb = self.test_data[testcase_id]['sourcedb']
+                else:
+                    self.sourcedb = ''
+                if 'sourceServer' in self.test_data[testcase_id]:
+                    self.sourceServer = self.test_data[testcase_id]['sourceServer']
+                else:
+                    self.sourceServer = ''
+                if 'sourceTable' in self.test_data[testcase_id]:
+                    self.sourceTable = self.test_data[testcase_id]['sourceTable']
+                else:
+                    self.sourceTable = ''
 
-                self.sourcePrimaryKey = self.test_data[testcase_id]['sourcePrimaryKey']
-                self.sourcedbType = self.test_data[testcase_id]['sourcedbType']
-                self.sourcedb = self.test_data[testcase_id]['sourcedb']
-                self.sourceServer = self.test_data[testcase_id]['sourceServer']
-                self.sourceTable = self.test_data[testcase_id]['sourceTable']
                 self.targetPrimaryKey = self.test_data[testcase_id]['targetPrimaryKey']
                 self.targetdbType = self.test_data[testcase_id]['targetdbType']
                 self.targetdb = self.test_data[testcase_id]['targetdb']
@@ -581,18 +600,31 @@ class App():
             sheet = book.get_sheet_by_name(str(testcase_id))
             max_index = sheet.max_row
             sheet['A1'].value = 'Source ----> Target'
-            sheet['A2'].value = "DATA COMPARISON"
+            sheet['C2'].value = "DATA COMPARISON"
             sheet['A{}'.format(max_index + 1)].value = 'Total Failure Count:'
             sheet['B{}'.format(max_index + 1)].value = len(output_reduce)
             max_index = sheet.max_row
             sheet['A{}'.format(max_index + 1)].value = 'Execution TimeStamp'
             sheet['B{}'.format(max_index + 1)].value = datetime.datetime.now()
 
-            writer.save()
+            # red_text = Font(color="9C0006")
+            # red_fill = PatternFill(bgColor="FFC7CE")
+            # dxf = DifferentialStyle(font=red_text, fill=red_fill)
+            # rule = Rule(type="containsText", operator="containsText", text="highlight", dxf=dxf)
+            # rule.formula = ['NOT(ISERROR(SEARCH("--->")))']
+            # writer.conditional_formatting.add('A1:F40', rule)
+
+            # writer.save()
             if len(output_reduce) == 0:
+                diff_output.head(n=100).to_excel(writer, sheet_name=str(testcase_id), startrow=3)
+                max_index = sheet.max_row
+                sheet['A{}'.format(max_index + 1)].value = 'Execution TimeStamp'
+                sheet['B{}'.format(max_index + 1)].value = datetime.datetime.now()
+                writer.save()
                 return True
             else:
                 print len(output_reduce)
+                writer.save()
                 return False
         except Exception as e:
             print e
@@ -680,32 +712,32 @@ class App():
 
     def get_testdata(self, test_selected):
         df_data = pd.DataFrame()
-        dict_data ={}
+        dict_data = {}
         tc_index = ''
         pd.set_option('max_colwidth',1024)
         for tc_id in test_selected:
             df_data = self.df_testcase.loc[[tc_id]]
-            str_tcid = df_data.to_string(columns=['Test Case ID'], index=False,header=False)
-            str_data = df_data.to_string(columns=['Title'], index=False,header=False)
-            str_test_class = df_data.to_string(columns=['Test Class'], index=False,header=False)
-            str_query = df_data.to_string(columns=['Test queries'], index=False,header=False)
+            str_tcid = df_data.to_string(columns=['Test Case ID'], index=False, header=False)
+            str_data = df_data.to_string(columns=['Title'], index=False, header=False)
+            str_test_class = df_data.to_string(columns=['Test Class'], index=False, header=False)
+            str_query = df_data.to_string(columns=['Test queries'], index=False, header=False)
             str_data = str_data.encode('utf8')
             str_tcid = str_tcid.encode('utf8')
             str_test_class = str_test_class.encode('utf8')
             str_query = str_query.encode('utf8')
 
             str_data = re.split('@|\n|\\n|[|]',str_data)
-            str_query = re.split('@|\\n|:',str_query)
-            str_data.insert(0,str_tcid)
-            str_data.insert(1,str_test_class)
+            str_query = re.split('@|\\n|:', str_query)
+            str_data.insert(0, str_tcid)
+            str_data.insert(1, str_test_class)
             for itr in str_data:
                 itr = itr.encode('unicode_escape')
                 itr = re.sub('[\s+]', '', itr)
-                itr = re.split(':|\n|\s|\\\\',itr)
+                itr = re.split(':|\n|\s|\\\\', itr)
                 if "TC_" in itr[0]:
                     test_class = str_data[1]
-                    dict_data[itr[0]] = {}
-                    tc_index = itr[0]
+                    dict_data[itr[0]+'_'+test_class] = {}
+                    tc_index = itr[0]+'_'+test_class
                     dict_data[tc_index]['testClass'] = test_class
                     if 'querySource' in str_query:
                         squery_index = str_query.index('querySource')
