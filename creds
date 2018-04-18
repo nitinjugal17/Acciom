@@ -5,7 +5,8 @@ userName=postgres
 passWord=postgres
 
 serverName=localhost2
-databaseType=postgres
+databaseType=mssql
 port=5433
 userName=postgres
 passWord=postgres
+driver=Office

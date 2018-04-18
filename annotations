@@ -19,6 +19,7 @@ Data:
 @targetColumn -- should always be passed as a list
 
 @excludeColumns -- should always be passed as a list
+note: @targetColumn override @excludeColumn
 
 Test Class:
 
@@ -28,11 +29,16 @@ DuplicateCheck -- always happen on the target db ,
    make sure you are passing column_names(exclude or include )as list[]
 DDLCheck -- can't find a proper solution , Need to be implemented
 LoadStrategy -- need to have more clarity , Need to be implemented
-NullCheck --
+NullCheck -- always performed on target db
 
 assumed:
-testcase id never changes , hence creating results with testcase_id_results.xslx
+
 "Test Case ID" as a column name is what program search to display testcases ids's for selection
+"Title"
+"Test queries"
+"Test Class"
+"Test Status
+ Pass/Fail"
 
 
 prerequisites:
