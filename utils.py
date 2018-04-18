@@ -165,10 +165,10 @@ class App():
                 print(exc_type, fname, exc_tb.tb_lineno)
                 pass
 
-        print '*-*-*-*-*-*-*-*-*-*FINAL RESULTS OF EXECUTION STARTS*-*-*-*-*-*-*-*-*-*'
+        print '\n*-*-*-*-*-*-*-*-*-*FINAL RESULTS OF EXECUTION STARTS*-*-*-*-*-*-*-*-*-*\n'
         for tc_id, stat in result_dict.iteritems():
             print "{}   :   {}".format(tc_id, stat)
-        print '*-*-*-*-*-*-*-*-*-*FINAL RESULTS OF EXECUTION ENDS*-*-*-*-*-*-*-*-*-*'
+        print '\n*-*-*-*-*-*-*-*-*-*FINAL RESULTS OF EXECUTION ENDS*-*-*-*-*-*-*-*-*-*'
 
     def read_creds(self):
         try:
