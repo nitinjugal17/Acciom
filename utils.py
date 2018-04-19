@@ -31,7 +31,8 @@ from duplicatecheck import check_duplicates
 from countcheck import check_count
 from ddlcheck import dict_compare
 
-class App():
+
+class App:
 
     def __init__(self):
         # selection of test case file , should be in xlsx format ,return path of file selected
@@ -285,10 +286,3 @@ class App():
         except Exception as e:
             print e
             return False
-
-
-
-
-
-
-
