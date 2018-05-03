@@ -17,6 +17,7 @@ def check_count(testcase_id, source_df, target_df, pathname):
         book = load_workbook(pathname)
         writer = pd.ExcelWriter(pathname)
         writer.book = book
+
         sheet = book.get_sheet_by_name(str(testcase_id))
         max_index = sheet.max_row
         # Make the text of the cell bold and italic

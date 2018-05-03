@@ -27,24 +27,34 @@ def get_testdata(test_selected, df_testcase):
         str_query = re.split('@|\\n|:', str_query)
         str_data.insert(0, str_tcid)
         str_data.insert(1, str_test_class)
+
         for itr in str_data:
+
             itr = itr.encode('unicode_escape')
             itr = re.sub('[\s+]', '', itr)
-            itr = re.split(':|\n|\s|\\\\', itr)
+            itr = re.sub(r'[\n]*', '', itr)
+            itr = re.split(':|\s|\\\\', itr)
+
+            # Check Testcase names starts with TC_ (hard-coded)
             if "TC_" in itr[0]:
                 test_class = str_data[1]
                 dict_data[itr[0] + '_' + test_class] = {}
                 tc_index = itr[0] + '_' + test_class
                 dict_data[tc_index]['testClass'] = test_class
-                if 'querySource' in str_query:
-                    squery_index = str_query.index('querySource')
+                if 'querySource ' in str_query:
+                    squery_index = str_query.index('querySource ')
                     sourceQuery = str_query[squery_index + 1]
                     sourceQuery = sourceQuery.replace('\'', '')
                     dict_data[tc_index]['querySource'] = sourceQuery.replace('\\n', '')
-                if 'queryTarget' in str_query:
-                    tquery_index = str_query.index('queryTarget')
+                else:
+                    print "************ NO SOURCE QUERY********************"
+                if 'queryTarget ' in str_query:
+                    tquery_index = str_query.index('queryTarget ')
                     targetQuery = str_query[tquery_index + 1]
                     dict_data[tc_index]['queryTarget'] = targetQuery.replace('\\n', '')
+                else:
+                    print "************ NO TARGET QUERY********************"
+
 
             elif "sourcedbType" in itr:
                 itr = itr[1].replace('\\n', "")
