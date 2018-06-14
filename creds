@@ -11,14 +11,14 @@ userName=postgres
 passWord=postgres
 driver=Office
 
-serverName=sdbs-vip.ord1.gscs.rackspace.com
+serverName=
 databaseType=mssql
 port=5433
 userName=postgres
 passWord=postgres
 driver=Office
 
-serverName=EBI-ODS-QA-02
+serverName=
 databaseType=mssql
 port=5433
 userName=postgres
