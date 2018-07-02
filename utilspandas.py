@@ -51,37 +51,50 @@ def engine_creation(creds, serverName, dbType, dbName):
 def create_datasource(testcase_id, test_data, dict_creds):
     try:
         tc_id_data = verify_data(test_data, testcase_id)
+        source_df = pd.DataFrame()
+        source_meta = pd.DataFrame()
+        target_df = pd.DataFrame()
+        target_meta = pd.DataFrame()
 
-        if tc_id_data['sourcedb'] != '' and tc_id_data['sourceServer'] != '' and tc_id_data['sourcedbType'] != '':
+        if tc_id_data['sourcedb'] != '' and tc_id_data['sourceServer'] != '' and tc_id_data['sourcedbType'] != '' and tc_id_data['sourceTable'] != '':
+            if tc_id_data['sourceTable'] != 'NaN':
 
-            source_engine = engine_creation(dict_creds, tc_id_data['sourceServer'], tc_id_data['sourcedbType'],
-                                            tc_id_data['sourcedb'])
+                source_engine = engine_creation(dict_creds, tc_id_data['sourceServer'], tc_id_data['sourcedbType'],
+                                                tc_id_data['sourcedb'])
 
-            print "-----------------SOURCE ENGINE CREATED-----------------"
-            print '{}'.format(source_engine)
-            print "-----------------SOURCE ENGINE CREATED-----------------"
+                print "-----------------SOURCE ENGINE CREATED-----------------"
+                print '{}'.format(source_engine)
+                print "-----------------SOURCE ENGINE CREATED-----------------"
 
-            source_df, source_meta = create_dataframe(source_engine, tc_id_data['sourcePrimaryKey'],
-                                                      tc_id_data['sourceTable'], tc_id_data['querySource'])
+                source_df, source_meta = create_dataframe(source_engine, tc_id_data['sourcePrimaryKey'],
+                                                          tc_id_data['sourceTable'], tc_id_data['querySource'])
 
+            else:
+                print 'Enter the Source  Table : {}'.format(tc_id_data['sourceTable'])
+                print '-------Verify Above Data and Retry--------'
         else:
-            print '{}|{}|{}'.format(tc_id_data['sourcedb'], tc_id_data['sourceServer'], tc_id_data['sourcedbType'])
+            print '{}|{}|{}|{}'.format(tc_id_data['sourcedb'],tc_id_data['sourceTable'], tc_id_data['sourceServer'], tc_id_data['sourcedbType'])
             print '-------Verify Above Data and Retry--------'
 
-        if tc_id_data['targetdb'] != '' and tc_id_data['targetServer'] != '' and tc_id_data['targetdbType'] != '':
 
-            target_engine = engine_creation(dict_creds, tc_id_data['targetServer'], tc_id_data['targetdbType'],
-                                            tc_id_data['targetdb'])
+        if tc_id_data['targetdb'] != '' and tc_id_data['targetServer'] != '' and tc_id_data['targetdbType'] != '' and tc_id_data['targetTable'] != '':
+            if tc_id_data['targetTable'] != 'NaN':
 
-            print "-----------------TARGET ENGINE CREATED-----------------"
-            print '{}'.format(target_engine)
-            print "-----------------TARGET ENGINE CREATED-----------------"
+                target_engine = engine_creation(dict_creds, tc_id_data['targetServer'], tc_id_data['targetdbType'],
+                                                tc_id_data['targetdb'])
 
-            target_df, target_meta = create_dataframe(target_engine, tc_id_data['targetPrimaryKey'],
-                                                      tc_id_data['targetTable'], tc_id_data['queryTarget'])
+                print "-----------------TARGET ENGINE CREATED-----------------"
+                print '{}'.format(target_engine)
+                print "-----------------TARGET ENGINE CREATED-----------------"
 
+                target_df, target_meta = create_dataframe(target_engine, tc_id_data['targetPrimaryKey'],
+                                                          tc_id_data['targetTable'], tc_id_data['queryTarget'])
+
+            else:
+                print 'Enter the Target Table : {}'.format(tc_id_data['targetTable'])
+                print '-------Verify Above Data and Retry--------'
         else:
-            print '{}|{}|{}'.format(tc_id_data['targetdb'], tc_id_data['targetServer'], tc_id_data['targetdbType'])
+            print '{}|{}|{}|{}'.format(tc_id_data['targetdb'],tc_id_data['targetTable'], tc_id_data['targetServer'], tc_id_data['targetdbType'])
             print '-------Verify Above Data and Retry--------'
 
         return source_df, target_df, source_meta, target_meta, tc_id_data
@@ -104,6 +117,7 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
             insp = inspect(engine)
             targetTable = re.split('\\.', targetTable)
             if len(targetTable) == 1:
+                print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[0]), con=engine)))
                 return_df = pd.read_sql("%s" % logic, con=engine)
                 ddl_dict = insp.get_columns(targetTable[0])
             else:
@@ -116,7 +130,11 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                 if table_check:
                     print "##########################Table Exists :{}".format(targetTable[1])
                     ddl_dict = insp.get_columns(targetTable[1])
+                    print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[1]), con=engine)))
                     return_df = pd.read_sql("%s" % logic, con=engine)
+                    #dynamicPK = list(return_df)
+
+                    #return_df.sort_values(by=[dynamicPK[0], dynamicPK[1], dynamicPK[2]])
                 else:
                     for key, value in meta.tables.iteritems():
                         table_name = meta.tables[key]
@@ -137,7 +155,12 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                 if table_check:
                     print "###########################Table Exists :{}".format(targetTable[0])
                     ddl_dict = insp.get_columns(targetTable[0])
-                    return_df = pd.read_sql("SELECT * FROM %s ORDER BY %s ASC;" % (targetTable[0], primaryKey), con=engine)
+                    print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {};".format(targetTable[0]), con=engine)))
+                    return_df = pd.read_sql("SELECT * FROM {} ;".format(targetTable[0]), con=engine)
+                    #dynamicPK = list(return_df)
+
+                    #return_df.sort_values(by=[dynamicPK[0],dynamicPK[1],dynamicPK[2]])
+
                 else:
                     for key, value in meta.tables.iteritems():
                         table_name = meta.tables[key]
@@ -152,8 +175,14 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                 if table_check:
                     print "###########################Table Exists :{}".format(targetTable[1])
                     ddl_dict = insp.get_columns(targetTable[1], schema=targetTable[0])
+                    print("Total Rows:"+ str(pd.read_sql("SELECT COUNT(*) FROM {}.{} ;".format(targetTable[0],
+                                                                        targetTable[1]), con=engine)))
                     return_df = pd.read_sql(
-                        "SELECT * FROM %s.%s ORDER BY %s ASC;" % (targetTable[0], targetTable[1], primaryKey), con=engine)
+                        "SELECT * FROM {}.{} ;".format(targetTable[0], targetTable[1]), con=engine)
+                    #dynamicPK = list(return_df)
+
+                    #return_df.sort_values(by=[dynamicPK[0], dynamicPK[1], dynamicPK[2]])
+
                 else:
                     for key, value in meta.tables.iteritems():
                         table_name = meta.tables[key]

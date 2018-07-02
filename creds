@@ -1,12 +1,12 @@
 serverName=localhost
 databaseType=postgres
-port=5433
+port=5432
 userName=postgres
 passWord=postgres
 
 serverName=localhost2
 databaseType=mssql
-port=5433
+port=5432
 userName=postgres
 passWord=postgres
 driver=Office

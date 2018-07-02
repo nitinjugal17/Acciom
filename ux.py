@@ -55,7 +55,8 @@ def select_testcases(df_testcases, pathname):
             strings = [test_list[x] for x in selections]
             print "You chose TestCases:" + str(strings)
             # calling create results sheet function to create sheet prior to execution
-            ue.create_results_sheet(strings, pathname)
+            # for string in strings:
+            #     ue.create_results_sheet(string, pathname)
             print selections
             return selections
     except Exception as e:

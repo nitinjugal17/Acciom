@@ -30,6 +30,7 @@ from nullcheck import check_null
 from duplicatecheck import check_duplicates
 from countcheck import check_count
 from ddlcheck import dict_compare
+import utilsexcel as ue
 
 
 class App:
@@ -59,103 +60,134 @@ class App:
             try:
                 testcase_id = key
                 result_dict[testcase_id] = 'NA'
+                ue.create_results_sheet(testcase_id, self.pathname)
                 source_df, target_df, source_meta, target_meta, tc_id_data = create_datasource\
                 (testcase_id, self.test_data, self.dict_credits)
 
-                if tc_id_data['testClass'] != 'CountCheck' and tc_id_data['testClass'] != 'Count Check' \
-                        and tc_id_data['testClass'] != 'DDLCheck' and tc_id_data['testClass'] != 'DDL Check':
-                    if tc_id_data['targetColumn'] != '':
-                        target_column = re.split('\[|\]|\,|\\\'|\\"', tc_id_data['targetColumn'])
-                        tc_id_data['targetColumn'] = [x for x in target_column if x]
-                    else:
-                        tc_id_data['targetColumn'] = select_columns(tc_id_data['excludeColumns'],
-                                                                    tc_id_data['testClass'], target_df)
-                else:
-                    print "COLUMN INFORMATION NOT NEEDED FOR EXECUTION TO PROCEED for {}".format(testcase_id)
 
-                if tc_id_data['testClass'] == 'DataValidation' or tc_id_data['testClass'] == 'Data Validation':
+                if not target_df.empty:
 
-                    if tc_id_data['targetColumn']:
-                        if df_comparison(testcase_id, tc_id_data, source_df, target_df, self.pathname):
-                            update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
-                            print "{} Executed and Results as PASS  ".format(testcase_id)
+                    if tc_id_data['testClass'] != 'CountCheck' and tc_id_data['testClass'] != 'Count Check' \
+                            and tc_id_data['testClass'] != 'DDLCheck' and tc_id_data['testClass'] != 'DDL Check':
+                        if tc_id_data['sourceColumn'] != '':
+                            source_column = re.split('\[|\]|\,|\\\'|\\"', tc_id_data['sourceColumn'])
+                            tc_id_data['sourceColumn'] = [x for x in source_column if x]
+
+                        if tc_id_data['targetColumn'] != '':
+                            target_column = re.split('\[|\]|\,|\\\'|\\"', tc_id_data['targetColumn'])
+                            tc_id_data['targetColumn'] = [x for x in target_column if x]
                         else:
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                            tc_id_data['targetColumn'] = select_columns(tc_id_data['excludeColumns'],
+                                                                        tc_id_data['testClass'], target_df)
+                    else:
+                        print "COLUMN INFORMATION NOT NEEDED FOR EXECUTION TO PROCEED for {}".format(testcase_id)
+
+                    if not source_df.empty:
+                        if tc_id_data['testClass'] == 'DataValidation' or tc_id_data['testClass'] == 'Data Validation':
+
+                            if tc_id_data['targetColumn']:
+                                if df_comparison(testcase_id, tc_id_data, source_df, target_df, self.pathname):
+                                    update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
+                                    result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
+                                    print "{} Executed and Results as PASS  ".format(testcase_id)
+                                else:
+                                    result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                                    update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
+                                    print "#*#*#*#*#*#*#*#*#*#*#*Something went Wrong WHILE EXECUTION {}, Results as FAIL " \
+                                          " *##*#*#*#*#*#*#*#*#".format(testcase_id)
+                            else:
+                                result_dict[testcase_id] = 'FAIL AS NO COLUMN GIVEN OR SELECTED FOR TEST'
+                                update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
+                                print "#*#*#*#*#*#*#* No Columns Selected for {} , Please Retry ! #*#*#*#*#*#*#*# "\
+                                    .format(testcase_id)
+                            continue
+
+                        elif tc_id_data['testClass'] == 'CountCheck' or tc_id_data['testClass'] == 'Count Check':
+                            # return true when completed else return false
+
+                            if check_count(testcase_id, source_df, target_df, self.pathname):
+                                if update_result(testcase_id, self.pathname, self.selected_sheet):
+                                    result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
+                                    print
+                                    "{} Executed and Results as PASS  ".format(testcase_id)
+                                else:
+                                    result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                                    print
+                                    "{} Executed and Results as FAIL  ".format(testcase_id)
+                            else:
+                                result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                                update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
+                                print
+                                "{} Executed and Results as FAIL  ".format(testcase_id)
+                            continue
+
+                        elif tc_id_data['testClass'] == 'DDLCheck' or tc_id_data['testClass'] == 'DDL Check':
+                            if dict_compare(source_meta, target_meta, testcase_id, self.pathname):
+                                update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
+                                result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
+                                print
+                                "{} Executed and Results as PASS  ".format(testcase_id)
+                            else:
+                                update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
+                                result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                                print
+                                "#*#*#*#*#*#*#*#*#*#*#*Something went Wrong WHILE EXECUTION {}, Results as FAIL " \
+                                " *##*#*#*#*#*#*#*#*#".format(testcase_id)
+                            continue
+
+                        else:
+                            print "Please Add a \"Test Class\" Field for framework to know how to Execute Case"
+                            continue
+
+                    else:
+                        result_dict[testcase_id] = 'Source DB Information is empty ! Verification Count :{}'.format(len(source_df))
+                        print 'Source DB Information is empty ! Verification Count :{}'.format(len(source_df))
+
+
+                    if tc_id_data['testClass'] == 'DuplicateCheck' or tc_id_data['testClass'] == 'Duplicate Check':
+
+                        if tc_id_data['targetColumn']:
+                            if check_duplicates(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname):
+                                update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
+                                result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
+                                print "{} Executed and Results as PASS  ".format(testcase_id)
+                            else:
+                                result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                                update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
+                                print "#*#*#*#*#*#*#*#*#*#*#*Something went Wrong WHILE EXECUTION {}, Results as FAIL "\
+                            " *##*#*#*#*#*#*#*#*#".format(testcase_id)
+                        else:
+                            result_dict[testcase_id] = 'FAIL AS NO COLUMN GIVEN OR SELECTED FOR TEST'
                             update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
-                            print "#*#*#*#*#*#*#*#*#*#*#*Something went Wrong WHILE EXECUTION {}, Results as FAIL " \
-                                  " *##*#*#*#*#*#*#*#*#".format(testcase_id)
-                    else:
-                        result_dict[testcase_id] = 'FAIL AS NO COLUMN GIVEN OR SELECTED FOR TEST'
-                        update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
-                        print "#*#*#*#*#*#*#* No Columns Selected for {} , Please Retry ! #*#*#*#*#*#*#*# "\
-                            .format(testcase_id)
+                            print "#*#*#*#*#*#*#* No Columns Selected for {} , Please Retry ! #*#*#*#*#*#*#*# "\
+                                    .format(testcase_id)
 
-                elif tc_id_data['testClass'] == 'CountCheck' or tc_id_data['testClass'] == 'Count Check':
-                    # return true when completed else return false
-                    if check_count(testcase_id, source_df, target_df, self.pathname):
-                        if update_result(testcase_id, self.pathname, self.selected_sheet):
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
-                            print "{} Executed and Results as PASS  ".format(testcase_id)
+                    elif tc_id_data['testClass'] == 'NullCheck' or tc_id_data['testClass'] == 'Null Check':
+
+                        if tc_id_data['targetColumn']:
+
+                            if check_null(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname):
+                                update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
+                                result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
+                                print "{} Executed and Results as PASS  ".format(testcase_id)
+
+                            else:
+                                result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                                update_result(testcase_id, self.pathname, self.selected_sheet,  override='FAIL')
+                                print "{} Executed and Results as FAIL  ".format(testcase_id)
                         else:
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
-                            print "{} Executed and Results as FAIL  ".format(testcase_id)
-                    else:
-                        result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
-                        update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
-                        print "{} Executed and Results as FAIL  ".format(testcase_id)
-
-                elif tc_id_data['testClass'] == 'DuplicateCheck' or tc_id_data['testClass'] == 'Duplicate Check':
-
-                    if tc_id_data['targetColumn']:
-                        if check_duplicates(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname):
-                            update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
-                            print "{} Executed and Results as PASS  ".format(testcase_id)
-                        else:
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
+                            result_dict[testcase_id] = 'FAIL AS NO COLUMN GIVEN OR SELECTED FOR TEST'
                             update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
-                            print "#*#*#*#*#*#*#*#*#*#*#*Something went Wrong WHILE EXECUTION {}, Results as FAIL "\
-                        " *##*#*#*#*#*#*#*#*#".format(testcase_id)
-                    else:
-                        result_dict[testcase_id] = 'FAIL AS NO COLUMN GIVEN OR SELECTED FOR TEST'
-                        update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
-                        print "#*#*#*#*#*#*#* No Columns Selected for {} , Please Retry ! #*#*#*#*#*#*#*# "\
+                            print "#*#*#*#*#*#*#* No Columns Selected for {} , Please Retry ! #*#*#*#*#*#*#*# " \
                                 .format(testcase_id)
 
-                elif tc_id_data['testClass'] == 'NullCheck' or tc_id_data['testClass'] == 'Null Check':
-
-                    if tc_id_data['targetColumn']:
-
-                        if check_null(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname):
-                            update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
-                            print "{} Executed and Results as PASS  ".format(testcase_id)
-
-                        else:
-                            result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
-                            update_result(testcase_id, self.pathname, self.selected_sheet,  override='FAIL')
-                            print "{} Executed and Results as FAIL  ".format(testcase_id)
                     else:
-                        result_dict[testcase_id] = 'FAIL AS NO COLUMN GIVEN OR SELECTED FOR TEST'
-                        update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
-                        print "#*#*#*#*#*#*#* No Columns Selected for {} , Please Retry ! #*#*#*#*#*#*#*# " \
-                            .format(testcase_id)
-
-                elif tc_id_data['testClass'] == 'DDLCheck' or tc_id_data['testClass'] == 'DDL Check':
-                    if dict_compare(source_meta, target_meta, testcase_id, self.pathname):
-                        update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
-                        result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
-                        print "{} Executed and Results as PASS  ".format(testcase_id)
-                    else:
-                        update_result(testcase_id, self.pathname, self.selected_sheet, override='FAIL')
-                        result_dict[testcase_id] = 'SHOULD BE MARKED AS FAIL'
-                        print "#*#*#*#*#*#*#*#*#*#*#*Something went Wrong WHILE EXECUTION {}, Results as FAIL "\
-                            " *##*#*#*#*#*#*#*#*#".format(testcase_id)
-
+                        print "Please Add a \"Test Class\" Field for framework to know how to Execute Case"
                 else:
-                    print "Please Add a \"Test Class\" Field for framework to know how to Execute Case"
-
+                    result_dict[testcase_id] = ' Target DB Information is empty ! Verification Count :{}'.format(len(target_df)) + '\n' \
+                                               + 'Source DB Information is empty ! Verification Count :{}'.format(len(source_df))
+                    print 'Target DB Information is empty ! Verification Count :{}'.format(len(target_df))
+                    print 'Source DB Information is empty ! Verification Count :{}'.format(len(source_df))
 
 
             except Exception as e:
@@ -173,9 +205,10 @@ class App:
 
     def read_creds(self):
         try:
-            if path.exists("creds") != '':
+            print(path.abspath('creds'))
+            if path.exists("/Users/Jugal/Documents/GitHub/Acciom/creds") != '':
                 dict_creds = {}
-                with open("creds") as f:
+                with open("/Users/Jugal/Documents/GitHub/Acciom/creds") as f:
                     for line in f:
 
                         if line != '\n' and line != '':

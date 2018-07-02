@@ -1,25 +1,35 @@
 
 Data:
 
-@sourcePrimaryKey --
+
 @sourcedbType --
-@sourcedb --
 @sourceServer --
-@sourceQuery --
+@sourcedb --
+
+
+@sourcePrimaryKey --
 @sourceTable --
-@sourceColumn --
+@sourceColumn -- should always be passed as a list
+
+@querySource --
 
 
-@targetPrimaryKey --
+
 @targetdbType --
-@targetQuery --
 @targetdb --
 @targetServer --
+
+@targetPrimaryKey --
 @targetTable --
 @targetColumn -- should always be passed as a list
 
+@queryTarget --
+
+
 @excludeColumns -- should always be passed as a list
 note: @targetColumn override @excludeColumn
+
+
 
 Test Class:
 
@@ -48,8 +58,6 @@ wxpython
 pandas
 sqlalchemy
 openpyxl
-
-
 Oracle
 Mssql
 Mysql

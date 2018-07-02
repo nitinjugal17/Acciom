@@ -14,152 +14,215 @@ def get_testdata(test_selected, df_testcase):
     pd.set_option('max_colwidth', 1024)
     for tc_id in test_selected:
         df_data = df_testcase.loc[[tc_id]]
+        checkColumn = ['Test Case ID','Columns','Details','Test Class','Test queries','TableSource','TableTarget']
+        for column in checkColumn:
+            if column in list(df_data):
+                print "Column Exists:{}".format(column)
+                continue
+            else:
+                print '*#*#*#*#*#Please Make Sure You Have Sheet with Column Name:{}*#*#*#*#*#'.format(column)
+
         str_tcid = df_data.to_string(columns=['Test Case ID'], index=False, header=False)
-        str_data = df_data.to_string(columns=['Title'], index=False, header=False)
+        str_data = df_data.to_string(columns=['Columns'], index=False, header=False)
+        str_details = df_data.to_string(columns=['Details'], index=False, header=False)
         str_test_class = df_data.to_string(columns=['Test Class'], index=False, header=False)
         str_query = df_data.to_string(columns=['Test queries'], index=False, header=False)
+        sourceTables = df_data.to_string(columns=['TableSource'], index=False, header=False)
+        targetTables = df_data.to_string(columns=['TableTarget'], index=False, header=False)
+
+
         str_data = str_data.encode('utf8')
         str_tcid = str_tcid.encode('utf8')
         str_test_class = str_test_class.encode('utf8')
         str_query = str_query.encode('utf8')
+        str_details = str_details.encode('utf8')
+        sourceTables = sourceTables.encode('utf8')
+        targetTables = targetTables.encode('utf8')
+
+
 
         str_data = re.split('@|\n|\\n|[|]', str_data)
+        str_details = re.split('@|\n|\\n|[|]', str_details)
         str_query = re.split('@|\\n|:', str_query)
         str_data.insert(0, str_tcid)
         str_data.insert(1, str_test_class)
+        str_data.extend(str_details)
 
-        for itr in str_data:
+        # sourceTables = re.sub(r'[\n|\s+|\\\\]*','',sourceTables)
+        # targetTables = re.sub('[\n]*','',targetTables)
+        sourceTables = sourceTables.replace('\n','')
+        sourceTables = re.split('[;]', sourceTables)
+        targetTables = re.split('[;]', targetTables)
 
-            itr = itr.encode('unicode_escape')
-            itr = re.sub('[\s+]', '', itr)
-            itr = re.sub(r'[\n]*', '', itr)
-            itr = re.split(':|\s|\\\\', itr)
+        for i in range(0,len(sourceTables)) :
+            strCopy = sourceTables[i]
+            strCopy =  strCopy.strip('\\n')
+            sourceTables[i] = strCopy
 
-            # Check Testcase names starts with TC_ (hard-coded)
-            if "TC_" in itr[0]:
-                test_class = str_data[1]
-                dict_data[itr[0] + '_' + test_class] = {}
-                tc_index = itr[0] + '_' + test_class
-                dict_data[tc_index]['testClass'] = test_class
-                if 'querySource ' in str_query:
-                    squery_index = str_query.index('querySource ')
-                    sourceQuery = str_query[squery_index + 1]
-                    sourceQuery = sourceQuery.replace('\'', '')
-                    dict_data[tc_index]['querySource'] = sourceQuery.replace('\\n', '')
-                else:
-                    print "************ NO SOURCE QUERY********************"
-                if 'queryTarget ' in str_query:
-                    tquery_index = str_query.index('queryTarget ')
-                    targetQuery = str_query[tquery_index + 1]
-                    dict_data[tc_index]['queryTarget'] = targetQuery.replace('\\n', '')
-                else:
-                    print "************ NO TARGET QUERY********************"
+        sourceTables = [x for x in sourceTables if x]   # list comprehension for removing empty string
+
+        for i in range(0, len(targetTables)):
+            strCopy = targetTables[i]
+            strCopy = strCopy.strip('\\n')
+            targetTables[i] = strCopy
+
+        targetTables = [x for x in targetTables if x]  # list comprehension for removing empty string
+        print sourceTables,targetTables
 
 
-            elif "sourcedbType" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['sourcedbType'] = itr
 
-            elif "sourceServer" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['sourceServer'] = itr
+        for i in range(0,len(targetTables)):
 
-            elif "sourcedb" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['sourcedb'] = itr
+            for itr in str_data:
 
-            elif "sourceTable" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['sourceTable'] = itr
+                itr = itr.encode('unicode_escape')
+                itr = re.sub('[\s+]', '', itr)        # for replacing whitespace space
+                itr = re.sub(r'[\n]*', '', itr)       # for replacing newline comment space
+                itr = re.split(':|\s|\\\\', itr)
 
-            # elif "sourceQuery" in itr :
-            #     itr = itr[1].replace('\\n', "")
-            #     itr = itr.replace('\n', "")
-            #     itr = itr.replace(':', "")
-            #     itr = itr.replace('\\', "")
-            #     dict_data[tc_index]['sourceQuery'] = itr
+                # Check Testcase names starts with TC_ (hard-coded)
+                if "TC_" in itr[0]:
+                    test_class = str_data[1]
+                    dict_data[itr[0] + '_' + test_class + '_' + str(i)] = {}
+                    tc_index = itr[0] + '_' + test_class + '_' + str(i)
+                    dict_data[tc_index]['testClass'] = test_class
+                    if 'querySource' in str_query:
+                        squery_index = str_query.index('querySource ')
+                        sourceQuery = str_query[squery_index + 1]
+                        sourceQuery = sourceQuery.replace('\'', '')
+                        dict_data[tc_index]['querySource'] = sourceQuery.replace('\\n', '')
+                    else:
+                        print "************ NO SOURCE QUERY********************"
+                    if 'queryTarget' in str_query:
+                        tquery_index = str_query.index('queryTarget ')
+                        targetQuery = str_query[tquery_index + 1]
+                        dict_data[tc_index]['queryTarget'] = targetQuery.replace('\\n', '')
+                    else:
+                        print "************ NO TARGET QUERY********************"
 
-            elif "sourceColumn" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['sourceColumn'] = itr
 
-            elif "targetdbType" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['targetdbType'] = itr
+                elif "sourcedbType" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['sourcedbType'] = itr
 
-            elif "targetServer" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['targetServer'] = itr
+                elif "sourceServer" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['sourceServer'] = itr
 
-            elif "targetdb" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['targetdb'] = itr
+                elif "sourcedb" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['sourcedb'] = itr
 
-            elif "targetTable" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['targetTable'] = itr
+                elif "sourceTable" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['sourceTable'] = itr
 
-            # elif "targetQuery" in itr:
-            #     itr = itr[1].replace('\\n', "")
-            #     itr = itr.replace('\n', "")
-            #     itr = itr.replace(':', "")
-            #     itr = itr.replace('\\', "")
-            #     dict_data[tc_index]['targetQuery'] = itr
+                # elif "sourceQuery" in itr :
+                #     itr = itr[1].replace('\\n', "")
+                #     itr = itr.replace('\n', "")
+                #     itr = itr.replace(':', "")
+                #     itr = itr.replace('\\', "")
+                #     dict_data[tc_index]['sourceQuery'] = itr
 
-            elif "targetColumn" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['targetColumn'] = itr
+                elif "sourceColumn" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['sourceColumn'] = itr
 
-            elif "sourcePrimaryKey" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['sourcePrimaryKey'] = itr
+                elif "targetdbType" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['targetdbType'] = itr
 
-            elif "targetPrimaryKey" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['targetPrimaryKey'] = itr
+                elif "targetServer" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['targetServer'] = itr
 
-            elif "excludeColumns" in itr:
-                itr = itr[1].replace('\\n', "")
-                itr = itr.replace('\n', "")
-                itr = itr.replace(':', "")
-                itr = itr.replace('\\', "")
-                dict_data[tc_index]['excludeColumns'] = itr
+                elif "targetdb" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['targetdb'] = itr
+
+                elif "targetTable" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['targetTable'] = itr
+
+
+                # elif "targetQuery" in itr:
+                #     itr = itr[1].replace('\\n', "")
+                #     itr = itr.replace('\n', "")
+                #     itr = itr.replace(':', "")
+                #     itr = itr.replace('\\', "")
+                #     dict_data[tc_index]['targetQuery'] = itr
+
+                elif "targetColumn" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['targetColumn'] = itr
+
+                elif "sourcePrimaryKey" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['sourcePrimaryKey'] = itr
+
+                elif "targetPrimaryKey" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['targetPrimaryKey'] = itr
+
+                elif "excludeColumns" in itr:
+                    itr = itr[1].replace('\\n', "")
+                    itr = itr.replace('\n', "")
+                    itr = itr.replace(':', "")
+                    itr = itr.replace('\\', "")
+                    dict_data[tc_index]['excludeColumns'] = itr
+
+                elif targetTables[i] != '':
+                    dict_data[tc_index]['targetTable'] = targetTables[i]
+                    if len(sourceTables) >= i:
+                        dict_data[tc_index]['sourceTable'] = sourceTables[i]
+
+
+
+        # if 'MultiTable' in df_data.columns :
+        #     str_tables = df_data.to_string(columns=['MultiTable'], index=False, header=False)
+        #     str_tables = str_tables.encode('utf8')
+        #     str_tables = re.split('@|\n|\\n|[|]', str_tables)
+        #     #str_data.append(str_tables)
+        #     str_data.insert(2,str_tables)
+
+        print str_data,dict_data
+
     return dict_data
     # pd.reset_option('max_colwidth')
 
@@ -171,9 +234,11 @@ def update_result(testcase_id, pathname, selected_sheet, override=''):
         check_df = pd.read_excel(pathname, sheet_name=str(testcase_id))
         check_index_len += len(check_df.index)
         work_book = load_workbook(pathname)
-        sheet = work_book.get_sheet_by_name(selected_sheet)
+        #sheet = work_book.get_sheet_by_name(selected_sheet)
+        sheet = work_book[selected_sheet]
         len_row = sheet.max_row
-        sheet2 = work_book.get_sheet_by_name(str(testcase_id))
+        #sheet2 = work_book.get_sheet_by_name(str(testcase_id))
+        sheet2 = work_book[str(testcase_id)]
 
         if sheet2['D4'].value == 'PASS' or override == 'PASS':
             override = 'PASS'
@@ -210,17 +275,21 @@ def update_result(testcase_id, pathname, selected_sheet, override=''):
         return False
 
 
-def create_results_sheet(sheetnames, pathname):
+def create_results_sheet(sheet, pathname):
     try:
         work_book = load_workbook(pathname)
         # print sheetnames,type(sheetnames)
 
-        for sheet in sheetnames:
-            if str(sheet) in work_book.sheetnames:
-                # work_book.get_sheet_by_name(str(sheet)).title = str(sheet) + '_old'
-                name = work_book.get_sheet_by_name(str(sheet))
-                work_book.remove_sheet(name)
-            work_book.create_sheet(str(sheet))
+        # for sheet in sheetnames:
+        if str(sheet) in work_book.sheetnames:
+            # work_book.get_sheet_by_name(str(sheet)).title = str(sheet) + '_old'
+            #name = work_book.get_sheet_by_name(str(sheet))
+            #name = work_book[str(sheet)]
+            #work_book.remove_sheet(name)
+            del work_book[str(sheet)]
+            print '*#*#*#*#*#*#*#*#*#*# OLD SHEET DELETED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+        work_book.create_sheet(str(sheet))
+        print '*#*#*#*#*#*#*#*#*#*# FRESH SHEET CREATED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
         work_book.save(pathname)
         return True
     except Exception as e:

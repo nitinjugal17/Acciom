@@ -1,0 +1,68 @@
+Using Acciom Basic Checks Required :
+
+*Input Excel file (.xlsx) format :
+
+
+For Reading Test Case Id :
+*Make Sure Column Name (Case-Sensitive) 'Test Case ID'.
+*Reads Row Value checking "TC_" as a starting Text.
+
+
+For Reading/Updating Test Status:
+* Make Sure TEST STATUS to be defined on Column B1:** as reason Framework Updates
+    status(PASS/FAIL) using Test Case ID Index.
+
+
+For importing Test Data for Execution make sure :
+*Column Name (Case-Sensitive) 'Title'.
+For Execution to proceed make sure you enter below details in 'Title' row :
+Annotations always starts with : <'@>
+
+    Annotations    Type of Data to be passed       Required Field
+'@sourcePrimaryKey -- String
+'@sourceTable -- String
+'@sourceColumn -- List[]
+
+'@targetPrimaryKey -- String
+'@targetTable -- String
+'@targetColumn -- List[]
+
+'@excludeColumns -- List[]
+note: '@targetColumn override '@excludeColumn
+
+
+For importing Source and Target Details :
+*Make Sure Column Name (Case-Sensitive) 'Details'.
+For Execution to proceed make sure you enter below details in 'Details' row :
+Annotations always starts with : <'@>
+
+    Annotations    Type of Data to be passed       Required Field
+'@sourcedbType -- String
+'@sourceServer -- String
+'@sourcedb -- String
+
+'@targetdbType -- String
+'@targetdb -- String
+'@targetServer -- String
+
+
+For Checking What action to perform on Test Data:
+*Make Sure Column Name (Case-Sensitive) 'Test Class'.
+
+    Annotations    Usage
+CountCheck -- direct data comparison with source and target db
+DataValidation -- exact data on both table
+DuplicateCheck -- always happen on the target db ,
+   make sure you are passing column_names(exclude or include )as list[]
+LoadStrategy -- need to have more clarity , Need to be implemented
+NullCheck -- always performed on target db
+DDLCheck -- for proper results , performs check on similar dbType
+
+For Using Your Own Logic on Source/Target Data Pull (and perform action on them) :
+*Make Sure Column Name (Case-Sensitive) 'Test queries'.
+Annotations always starts with : <'@>
+ Annotations          Usage
+'@querySource -- Pass Sql Query as a String
+'@queryTarget -- Pass Sql Query as a String
+
+NOTE: While Using Test Queries , your test action will be on data we get from Sql Query Passed.
