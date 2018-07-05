@@ -66,3 +66,11 @@ Annotations always starts with : <'@>
 '@queryTarget -- Pass Sql Query as a String
 
 NOTE: While Using Test Queries , your test action will be on data we get from Sql Query Passed.
+
+
+
+
+New Requirements:
+Adding Check for Creds file and Stop Execution
+Dataframe read time check
+

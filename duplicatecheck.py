@@ -15,7 +15,8 @@ def check_duplicates(column_name, testcase_id, target_df, pathname):
         check_len = 0
         if len(target_df.index) != 0:
             book = load_workbook(pathname)
-            sheet = book.get_sheet_by_name(str(testcase_id))
+            #sheet = book.get_sheet_by_name(str(testcase_id))
+            sheet = book[str(testcase_id)]
             sheet['A1'].value = 'Duplicate Check'
 
             if len(column_name) != 0:

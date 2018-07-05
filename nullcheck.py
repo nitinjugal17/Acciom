@@ -19,11 +19,13 @@ def check_null(column_name, testcase_id, target_df, pathname):
         writer = pd.ExcelWriter(pathname)
         writer.book = book
         if testcase_id in book.sheetnames:
-            name = book.get_sheet_by_name(testcase_id)
-            book.remove_sheet(name)
+            #name = book.get_sheet_by_name(testcase_id)
+            #book.remove_sheet(name)
+            del book[str(testcase_id)]
         output_reduce = nan_rows.head(n=100)
         output_reduce.to_excel(writer, sheet_name=str(testcase_id), index=False, startrow=3)
-        sheet = book.get_sheet_by_name(str(testcase_id))
+        #sheet = book.get_sheet_by_name(str(testcase_id))
+        sheet = book[str(testcase_id)]
         max_index = sheet.max_row
         sheet['A2'].value = "NULL CHECK --- Target DB"
         # Make the text of the cell bold and italic

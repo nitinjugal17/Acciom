@@ -14,7 +14,8 @@ def dict_compare(source_meta, target_meta, testcase_id, pathname):
         counter = 0
         book = load_workbook(pathname)
         writer = pd.ExcelWriter(pathname)
-        sheet = book.get_sheet_by_name(str(testcase_id))
+        #sheet = book.get_sheet_by_name(str(testcase_id))
+        sheet = book[str(testcase_id)]
         writer.book = book
         sheet['A1'].value = 'DDL Check'
         sheet['A2'].value = 'Column Name'

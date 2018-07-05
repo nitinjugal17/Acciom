@@ -23,22 +23,22 @@ def check_count(testcase_id, source_df, target_df, pathname):
         max_index = sheet.max_row
         # Make the text of the cell bold and italic
         # cell = sheet['A{}'.format(max_index + 1)]
-        sheet['A{}'.format(max_index + 2)].value = 'Column'
+        #sheet['A{}'.format(max_index + 2)].value = 'Column'
         sheet['A{}'.format(max_index + 3)].value = 'Row'
 
         sheet['B{}'.format(max_index + 1)].value = 'Source'
         sheet['C{}'.format(max_index + 1)].value = 'Target'
         sheet['D{}'.format(max_index + 1)].value = 'Result'
 
-        sheet['B{}'.format(max_index + 2)].value = len(source_column)
-        sheet['C{}'.format(max_index + 2)].value = len(target_column)
+        #sheet['B{}'.format(max_index + 2)].value = len(source_column)
+        #sheet['C{}'.format(max_index + 2)].value = len(target_column)
         sheet['B{}'.format(max_index + 3)].value = len(source_row)
         sheet['C{}'.format(max_index + 3)].value = len(target_row)
 
-        if source_column == target_column:
-            sheet['D{}'.format(max_index + 2)].value = 'PASS'
-        else:
-            sheet['D{}'.format(max_index + 2)].value = 'FAIL'
+        # if source_column == target_column:
+        #     sheet['D{}'.format(max_index + 2)].value = 'PASS'
+        # else:
+        #     sheet['D{}'.format(max_index + 2)].value = 'FAIL'
         if source_row == target_row:
             sheet['D{}'.format(max_index + 3)].value = 'PASS'
         else:

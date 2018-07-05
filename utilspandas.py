@@ -7,7 +7,7 @@ import urllib
 import pandas as pd
 import re
 import inspect as ins
-import os, sys
+import os, sys, time
 
 
 
@@ -117,8 +117,14 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
             insp = inspect(engine)
             targetTable = re.split('\\.', targetTable)
             if len(targetTable) == 1:
-                print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[0]), con=engine)))
-                return_df = pd.read_sql("%s" % logic, con=engine)
+
+                rowCount = pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[0]), con=engine)
+                print "Total Rows:" + str(rowCount.iloc[0]['count'])
+                query = '{}'.format(logic)
+                return_df = create_chunk(rowCount, query, engine)
+
+                #print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[0]), con=engine)))
+                #return_df = pd.read_sql("%s" % logic, con=engine)
                 ddl_dict = insp.get_columns(targetTable[0])
             else:
                 meta = MetaData()
@@ -130,8 +136,15 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                 if table_check:
                     print "##########################Table Exists :{}".format(targetTable[1])
                     ddl_dict = insp.get_columns(targetTable[1])
-                    print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[1]), con=engine)))
-                    return_df = pd.read_sql("%s" % logic, con=engine)
+
+                    rowCount = pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[1]), con=engine)
+                    print "Total Rows:" + str(rowCount.iloc[0]['count'])
+
+                    query = '{}'.format(logic)
+                    return_df = create_chunk(rowCount, query, engine)
+
+                    #print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[1]), con=engine)))
+                    #return_df = pd.read_sql("%s" % logic, con=engine)
                     #dynamicPK = list(return_df)
 
                     #return_df.sort_values(by=[dynamicPK[0], dynamicPK[1], dynamicPK[2]])
@@ -155,8 +168,15 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                 if table_check:
                     print "###########################Table Exists :{}".format(targetTable[0])
                     ddl_dict = insp.get_columns(targetTable[0])
-                    print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {};".format(targetTable[0]), con=engine)))
-                    return_df = pd.read_sql("SELECT * FROM {} ;".format(targetTable[0]), con=engine)
+
+                    rowCount = pd.read_sql("SELECT COUNT(*) FROM {};".format(targetTable[0]), con=engine)
+                    print "Total Rows:" + str(rowCount.iloc[0]['count'])
+
+                    query = 'SELECT * FROM {} ;'.format(targetTable[0])
+                    return_df = create_chunk(rowCount, query, engine)
+
+                    #print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {};".format(targetTable[0]), con=engine)))
+                    #return_df = pd.read_sql("SELECT * FROM {} ;".format(targetTable[0]), con=engine)
                     #dynamicPK = list(return_df)
 
                     #return_df.sort_values(by=[dynamicPK[0],dynamicPK[1],dynamicPK[2]])
@@ -175,10 +195,16 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                 if table_check:
                     print "###########################Table Exists :{}".format(targetTable[1])
                     ddl_dict = insp.get_columns(targetTable[1], schema=targetTable[0])
-                    print("Total Rows:"+ str(pd.read_sql("SELECT COUNT(*) FROM {}.{} ;".format(targetTable[0],
-                                                                        targetTable[1]), con=engine)))
-                    return_df = pd.read_sql(
-                        "SELECT * FROM {}.{} ;".format(targetTable[0], targetTable[1]), con=engine)
+                    rowCount = pd.read_sql("SELECT COUNT(*) FROM {}.{} ;".format(targetTable[0],
+                                                                        targetTable[1]), con=engine)
+                    print("Total Rows:"+ str(rowCount.iloc[0]))
+
+                    query = 'SELECT * FROM {}.{} ;'.format(targetTable[0], targetTable[1])
+                    return_df = create_chunk(rowCount,query,engine)
+
+                    # return_df = pd.read_sql(
+                    #     "SELECT * FROM {}.{} ;".format(targetTable[0], targetTable[1]), con=engine)
+
                     #dynamicPK = list(return_df)
 
                     #return_df.sort_values(by=[dynamicPK[0], dynamicPK[1], dynamicPK[2]])
@@ -222,3 +248,44 @@ def verify_data(test_data, testcase_id):
     return tc_id_data
 
 
+def create_chunk(rowCount,query,engine):
+    try:
+        start = time.clock()
+        lines_number = rowCount.iloc[0]['count']
+        if lines_number >= 50000 and lines_number <= 500000:
+            lines_in_chunk = int(round(lines_number/5))
+            print 'Chunck Data with {} lines'.format(lines_in_chunk)
+        elif lines_number > 500000:
+            lines_in_chunk = int(round(lines_number/20))
+            print 'Chunck Data with {} lines'.format(lines_in_chunk)
+        else:
+            lines_in_chunk = int(lines_number)
+            print 'Chunck Data with {} lines'.format(lines_in_chunk)
+        counter = 0
+        completed = 0
+        index = 0
+        frames = pd.DataFrame()
+
+        for df in pd.read_sql(query, engine, chunksize=lines_in_chunk):
+            counter += lines_in_chunk
+            new_completed = int(round(float(counter) / lines_number * 100))
+            if len(df) >= 0:
+                frames = frames.append(df, ignore_index=True)
+            else:
+                print False
+
+            if new_completed > completed:
+                completed = new_completed
+                print "Completed", completed, "%"
+            index += 1
+
+        end = time.clock()
+        print 'Total Time Elapsed for Creating Dataframe :{}'.format(start - end)
+        return frames
+
+    except Exception as e:
+        print e
+        print ins.stack()[0][3]
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
