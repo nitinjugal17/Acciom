@@ -20,7 +20,7 @@ def engine_creation(creds, serverName, dbType, dbName):
         passWord = creds[serverName]['passWord']
 
         if dbType == 'postgres':
-            db_engine = create_engine('postgresql://%s:%s@%s:%s/%s' % (userName, passWord, serverName, port, dbName))
+            db_engine = create_engine('postgresql://%s:%s@%s:%s/%s' % (userName, passWord, serverName, port, dbName),execution_options=dict(stream_results=True))
             return db_engine
 
         elif dbType == 'oracle':
@@ -35,10 +35,10 @@ def engine_creation(creds, serverName, dbType, dbName):
                 quoted = urllib.quote_plus(
                     'DRIVER={' + driver + '};SERVER=' + serverName + ';UID=' + userName + ';PWD=' + passWord + ';PORT='
                     + port + '')
-                db_engine = create_engine('mssql+pyodbc:///?odbc_connect={}'.format(quoted))
+                db_engine = create_engine('mssql+pyodbc:///?odbc_connect={}'.format(quoted),)
                 return db_engine
             else:
-                print "Check the creds is valid or missing and re-run"
+                print "Check the creds is invalid or missing and re-run"
 
     except Exception as e:
         print e
@@ -281,6 +281,7 @@ def create_chunk(rowCount,query,engine):
 
         end = time.clock()
         print 'Total Time Elapsed for Creating Dataframe :{}'.format(start - end)
+        engine.dispose()
         return frames
 
     except Exception as e:
