@@ -44,6 +44,7 @@ class App:
 
         # reading server credentials from file and return it as a dict
         if self.read_creds():
+
             self.dict_credits = self.read_creds()
 
             # using df_test data asking user to select the test cases needed to be executed and return as a list
@@ -64,7 +65,7 @@ class App:
                 testcase_id = key
                 result_dict[testcase_id] = 'NA'
                 ue.create_results_sheet(testcase_id, self.pathname)
-                source_df, target_df, source_meta, target_meta, tc_id_data = create_datasource\
+                source_df, target_df, source_meta, target_meta, tc_id_data ,tablesourcetarget = create_datasource\
                 (testcase_id, self.test_data, self.dict_credits)
 
 
@@ -88,7 +89,7 @@ class App:
                     if tc_id_data['testClass'] == 'DuplicateCheck' or tc_id_data['testClass'] == 'Duplicate Check':
 
                         if tc_id_data['targetColumn']:
-                            if check_duplicates(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname):
+                            if check_duplicates(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname, tablesourcetarget):
                                 update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
                                 result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
                                 print "{} Executed and Results as PASS  ".format(testcase_id)
@@ -107,7 +108,7 @@ class App:
 
                         if tc_id_data['targetColumn']:
 
-                            if check_null(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname):
+                            if check_null(tc_id_data['targetColumn'], testcase_id, target_df, self.pathname, tablesourcetarget):
                                 update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
                                 result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
                                 print "{} Executed and Results as PASS  ".format(testcase_id)
@@ -130,7 +131,7 @@ class App:
                         if tc_id_data['testClass'] == 'DataValidation' or tc_id_data['testClass'] == 'Data Validation':
 
                             if tc_id_data['targetColumn']:
-                                if df_comparison(testcase_id, tc_id_data, source_df, target_df, self.pathname):
+                                if df_comparison(testcase_id, tc_id_data, source_df, target_df, self.pathname, tablesourcetarget):
                                     update_result(testcase_id, self.pathname, self.selected_sheet, override='PASS')
                                     result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
                                     print "{} Executed and Results as PASS  ".format(testcase_id)
@@ -149,7 +150,7 @@ class App:
                         elif tc_id_data['testClass'] == 'CountCheck' or tc_id_data['testClass'] == 'Count Check':
                             # return true when completed else return false
 
-                            if check_count(testcase_id, source_df, target_df, self.pathname):
+                            if check_count(testcase_id, source_df, target_df, self.pathname, tablesourcetarget):
                                 if update_result(testcase_id, self.pathname, self.selected_sheet):
                                     result_dict[testcase_id] = 'SHOULD BE MARKED AS PASS'
                                     print "{} Executed and Results as PASS  ".format(testcase_id)

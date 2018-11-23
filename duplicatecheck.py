@@ -6,7 +6,7 @@ import inspect as ins
 from os import path
 
 
-def check_duplicates(column_name, testcase_id, target_df, pathname):
+def check_duplicates(column_name, testcase_id, target_df, pathname , tablesourcetarget):
     try:
         column_name = [x.encode('utf-8') for x in column_name]
         print "Duplicate Check on Columns : {}".format(column_name)

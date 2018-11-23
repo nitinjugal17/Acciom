@@ -1,12 +1,12 @@
 import wx
 
 class SelectAll(wx.Dialog):
-    def __init__(self, parent, message, caption, choices=[]):
+    def __init__(self, parent, message, caption, choices):
         wx.Dialog.__init__(self, parent, -1)
         self.SetTitle(caption)
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.message = wx.StaticText(self, -1, message)
-        self.clb = wx.CheckListBox(self, -1, choices = choices)
+        self.clb = wx.CheckListBox(self, -1, choices=choices)
         self.chbox = wx.CheckBox(self, -1, 'Select all')
         self.btns = self.CreateSeparatedButtonSizer(wx.OK | wx.CANCEL)
         self.Bind(wx.EVT_CHECKBOX, self.EvtChBox, self.chbox)

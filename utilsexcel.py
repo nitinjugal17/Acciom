@@ -14,7 +14,7 @@ def get_testdata(test_selected, df_testcase):
     pd.set_option('max_colwidth', 1024)
     for tc_id in test_selected:
         df_data = df_testcase.loc[[tc_id]]
-        checkColumn = ['Test Case ID','Columns','Details','Test Class','Test queries','TableSource','TableTarget']
+        checkColumn = ['Test Case ID','Columns','Details','Test Class','Test queries','TableSourceTarget']
         for column in checkColumn:
             if column in list(df_data):
                 print "Column Exists:{}".format(column)
@@ -27,8 +27,8 @@ def get_testdata(test_selected, df_testcase):
         str_details = df_data.to_string(columns=['Details'], index=False, header=False)
         str_test_class = df_data.to_string(columns=['Test Class'], index=False, header=False)
         str_query = df_data.to_string(columns=['Test queries'], index=False, header=False)
-        sourceTables = df_data.to_string(columns=['TableSource'], index=False, header=False)
-        targetTables = df_data.to_string(columns=['TableTarget'], index=False, header=False)
+        sourceTables = df_data.to_string(columns=['TableSource:Target'], index=False, header=False)
+        #targetTables = df_data.to_string(columns=['TableTarget'], index=False, header=False)
 
 
         str_data = str_data.encode('utf8')
@@ -37,7 +37,7 @@ def get_testdata(test_selected, df_testcase):
         str_query = str_query.encode('utf8')
         str_details = str_details.encode('utf8')
         sourceTables = sourceTables.encode('utf8')
-        targetTables = targetTables.encode('utf8')
+        #targetTables = targetTables.encode('utf8')
 
 
 
@@ -52,21 +52,26 @@ def get_testdata(test_selected, df_testcase):
         # targetTables = re.sub('[\n]*','',targetTables)
         sourceTables = sourceTables.replace('\n','')
         sourceTables = re.split('[;]', sourceTables)
-        targetTables = re.split('[;]', targetTables)
-
+        #targetTables = re.split('[;]', targetTables)
+        targetTables = []
         for i in range(0,len(sourceTables)) :
             strCopy = sourceTables[i]
+
             strCopy =  strCopy.strip('\\n')
-            sourceTables[i] = strCopy
+            if not strCopy == '' :
+                strCopy = strCopy.split(':')
+                sourceTables[i] = strCopy[0]
+                targetTables.insert(i,strCopy[1])
 
         sourceTables = [x for x in sourceTables if x]   # list comprehension for removing empty string
 
-        for i in range(0, len(targetTables)):
-            strCopy = targetTables[i]
-            strCopy = strCopy.strip('\\n')
-            targetTables[i] = strCopy
+        #for i in range(0, len(targetTables)):
+         #   strCopy = targetTables[i]
+        #  strCopy = strCopy.strip('\\n')
+         #   targetTables[i] = strCopy
 
         targetTables = [x for x in targetTables if x]  # list comprehension for removing empty string
+
         print sourceTables,targetTables
 
 
@@ -83,18 +88,20 @@ def get_testdata(test_selected, df_testcase):
                 # Check Testcase names starts with TC_ (hard-coded)
                 if "TC_" in itr[0]:
                     test_class = str_data[1]
-                    dict_data[itr[0] + '_' + test_class + '_' + str(i)] = {}
-                    tc_index = itr[0] + '_' + test_class + '_' + str(i)
+                    dict_data[itr[0] + '_' + test_class + '-' + str(i)] = {}
+                    tc_index = itr[0] + '_' + test_class + '-' + str(i)
+                    #dict_data[itr[0] + '_' + test_class] = {}
+                    #tc_index = itr[0] + '_' + test_class
                     dict_data[tc_index]['testClass'] = test_class
                     if 'querySource' in str_query:
-                        squery_index = str_query.index('querySource ')
+                        squery_index = str_query.index('querySource')
                         sourceQuery = str_query[squery_index + 1]
                         sourceQuery = sourceQuery.replace('\'', '')
                         dict_data[tc_index]['querySource'] = sourceQuery.replace('\\n', '')
                     else:
                         print "************ NO SOURCE QUERY********************"
                     if 'queryTarget' in str_query:
-                        tquery_index = str_query.index('queryTarget ')
+                        tquery_index = str_query.index('queryTarget')
                         targetQuery = str_query[tquery_index + 1]
                         dict_data[tc_index]['queryTarget'] = targetQuery.replace('\\n', '')
                     else:
@@ -122,12 +129,12 @@ def get_testdata(test_selected, df_testcase):
                     itr = itr.replace('\\', "")
                     dict_data[tc_index]['sourcedb'] = itr
 
-                elif "sourceTable" in itr:
-                    itr = itr[1].replace('\\n', "")
-                    itr = itr.replace('\n', "")
-                    itr = itr.replace(':', "")
-                    itr = itr.replace('\\', "")
-                    dict_data[tc_index]['sourceTable'] = itr
+                # elif "sourceTable" in itr:
+                #     itr = itr[1].replace('\\n', "")
+                #     itr = itr.replace('\n', "")
+                #     itr = itr.replace(':', "")
+                #     itr = itr.replace('\\', "")
+                #     dict_data[tc_index]['sourceTable'] = itr
 
                 # elif "sourceQuery" in itr :
                 #     itr = itr[1].replace('\\n', "")
@@ -164,12 +171,12 @@ def get_testdata(test_selected, df_testcase):
                     itr = itr.replace('\\', "")
                     dict_data[tc_index]['targetdb'] = itr
 
-                elif "targetTable" in itr:
-                    itr = itr[1].replace('\\n', "")
-                    itr = itr.replace('\n', "")
-                    itr = itr.replace(':', "")
-                    itr = itr.replace('\\', "")
-                    dict_data[tc_index]['targetTable'] = itr
+                # elif "targetTable" in itr:
+                #     itr = itr[1].replace('\\n', "")
+                #     itr = itr.replace('\n', "")
+                #     itr = itr.replace(':', "")
+                #     itr = itr.replace('\\', "")
+                #     dict_data[tc_index]['targetTable'] = itr
 
 
                 # elif "targetQuery" in itr:
@@ -229,6 +236,14 @@ def get_testdata(test_selected, df_testcase):
 
 def update_result(testcase_id, pathname, selected_sheet, override=''):
     try:
+        splitName = testcase_id.split('-')
+        print '*#*#*#*#*#*#*#*#*#*# FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(testcase_id))
+        if "CountCheck" in splitName[0]:
+
+            testcase_id = testcase_id[::-1]
+            testcase_id = testcase_id.replace(splitName[-1], '0', 1)
+            testcase_id = testcase_id[::-1]
+            print'*#*#*#*#*#*#*#*#*#*# UPDATING Results in SHEET Name FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(testcase_id))
 
         check_index_len = 0
         check_df = pd.read_excel(pathname, sheet_name=str(testcase_id))
@@ -239,11 +254,13 @@ def update_result(testcase_id, pathname, selected_sheet, override=''):
         len_row = sheet.max_row
         #sheet2 = work_book.get_sheet_by_name(str(testcase_id))
         sheet2 = work_book[str(testcase_id)]
-
-        if sheet2['D4'].value == 'PASS' or override == 'PASS':
+        max_index = sheet2.max_row
+        print max_index
+        if sheet2['D{}'.format(max_index + 4)].value == 'PASS' or override == 'PASS':
             override = 'PASS'
         else:
             override = 'FAIL'
+
         if override == 'PASS':
             for cellObj in sheet['A1':'B{}'.format(len_row)]:
                 for cell in cellObj:
@@ -278,18 +295,51 @@ def update_result(testcase_id, pathname, selected_sheet, override=''):
 def create_results_sheet(sheet, pathname):
     try:
         work_book = load_workbook(pathname)
+
+        # sheet = re.split('-', sheet)
+        # print sheet[0]
         # print sheetnames,type(sheetnames)
 
+
         # for sheet in sheetnames:
+        # if str(sheet[0]) in work_book.sheetnames and int(sheet[1]) == 0:
+        #     work_book.get_sheet_by_name(str(sheet)).title = str(sheet) + '_old'
+        #     #name = work_book.get_sheet_by_name(str(sheet))
+        #     #name = work_book[str(sheet)]
+        #     #work_book.remove_sheet(name)
+        #
+        # if str(sheet[0]+'_old') in work_book.sheetnames:
+        #     del work_book[str(sheet[0]+sheet[1]+'_old')]
+        #     print '*#*#*#*#*#*#*#*#*#*# OLD SHEET DELETED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet[0]+'_old'))
+        #
+        # if int(sheet[1]) == 0:
+        #     work_book.create_sheet(str(sheet[0]))
+        #     print '*#*#*#*#*#*#*#*#*#*# FRESH SHEET CREATED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet[0]))
+        # else:
+        #     if work_book[str(sheet[0])]:
+        #         continue
+        #     else:
+        #         work_book.create_sheet(str(sheet[0]))
+        splitName = sheet.split('-')
+        print '*#*#*#*#*#*#*#*#*#*# FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+        if "CountCheck" in splitName[0] :
+            sheet = sheet[::-1]
+            sheet = sheet.replace(splitName[-1], '0', 1)
+            sheet = sheet[::-1]
+            print '*#*#*#*#*#*#*#*#*#*#  SHEET Name FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+
         if str(sheet) in work_book.sheetnames:
-            # work_book.get_sheet_by_name(str(sheet)).title = str(sheet) + '_old'
-            #name = work_book.get_sheet_by_name(str(sheet))
-            #name = work_book[str(sheet)]
-            #work_book.remove_sheet(name)
-            del work_book[str(sheet)]
-            print '*#*#*#*#*#*#*#*#*#*# OLD SHEET DELETED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
-        work_book.create_sheet(str(sheet))
-        print '*#*#*#*#*#*#*#*#*#*# FRESH SHEET CREATED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+            if "CountCheck" in splitName[0]:
+                print '*#*#*#*#*#*#*#*#*#*# ESCAPE SHEET CREATION FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+            else:
+                del work_book[str(sheet)]
+                print '*#*#*#*#*#*#*#*#*#*# OLD SHEET DELETED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+                work_book.create_sheet(str(sheet))
+                print '*#*#*#*#*#*#*#*#*#*# FRESH SHEET CREATED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+        else:
+            work_book.create_sheet(str(sheet))
+            print '*#*#*#*#*#*#*#*#*#*# FRESH SHEET CREATED FOR TEST :{}*#*#*#*#*#*#*#*#*#*'.format(str(sheet))
+
         work_book.save(pathname)
         return True
     except Exception as e:

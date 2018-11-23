@@ -4,10 +4,10 @@ from sqlalchemy import create_engine
 import time
 
 
-serverName = 'localhost'
-userName = 'postgres'
-port = '5432'
-passWord = 'postgres'
+serverName = '192.168.1.104'
+userName = 'UserTest'
+port = '1450'
+passWord = 'koen1g'
 driver = ''
 dbName = 'dellstore'
 
@@ -52,10 +52,12 @@ for df in pd.read_sql(query ,db_engine,chunksize=lines_in_chunk):
         print "Completed", completed, "%"
     index += 1
 #
+
+frames.to_csv('test.csv', encoding='utf-8', index=False)
 name = get_df_name(frames)
 print name ,time.clock()
 
-def get_df_name():
+def get_df_name(data):
 
     name =[x for x in globals() if globals()[x] is data][0]
 

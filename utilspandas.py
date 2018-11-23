@@ -55,6 +55,7 @@ def create_datasource(testcase_id, test_data, dict_creds):
         source_meta = pd.DataFrame()
         target_df = pd.DataFrame()
         target_meta = pd.DataFrame()
+        sourceTargetTable = tc_id_data['sourceTable'] +','+ tc_id_data['targetTable']
 
         if tc_id_data['sourcedb'] != '' and tc_id_data['sourceServer'] != '' and tc_id_data['sourcedbType'] != '' and tc_id_data['sourceTable'] != '':
             if tc_id_data['sourceTable'] != 'NaN':
@@ -97,7 +98,7 @@ def create_datasource(testcase_id, test_data, dict_creds):
             print '{}|{}|{}|{}'.format(tc_id_data['targetdb'],tc_id_data['targetTable'], tc_id_data['targetServer'], tc_id_data['targetdbType'])
             print '-------Verify Above Data and Retry--------'
 
-        return source_df, target_df, source_meta, target_meta, tc_id_data
+        return source_df, target_df, source_meta, target_meta, tc_id_data , sourceTargetTable
 
     except Exception as e:
         print e
@@ -118,11 +119,11 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
             targetTable = re.split('\\.', targetTable)
             if len(targetTable) == 1:
 
-                rowCount = pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[0]), con=engine)
-                print "Total Rows:" + str(rowCount.iloc[0]['count'])
+                rowCount = pd.read_sql(logic, con=engine)
+                print "Total Rows:" + str(len(rowCount))
                 query = '{}'.format(logic)
-                return_df = create_chunk(rowCount, query, engine)
-
+                return_df = create_chunk(len(rowCount), query, engine)
+                return_df.name = targetTable[0]
                 #print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[0]), con=engine)))
                 #return_df = pd.read_sql("%s" % logic, con=engine)
                 ddl_dict = insp.get_columns(targetTable[0])
@@ -137,12 +138,12 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                     print "##########################Table Exists :{}".format(targetTable[1])
                     ddl_dict = insp.get_columns(targetTable[1])
 
-                    rowCount = pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[1]), con=engine)
-                    print "Total Rows:" + str(rowCount.iloc[0]['count'])
+                    rowCount = pd.read_sql(logic, con=engine)
+                    print "Total Rows:" + str(len(rowCount))
 
                     query = '{}'.format(logic)
-                    return_df = create_chunk(rowCount, query, engine)
-
+                    return_df = create_chunk(len(rowCount), query, engine)
+                    return_df.name = targetTable[1]
                     #print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {} ;".format(targetTable[1]), con=engine)))
                     #return_df = pd.read_sql("%s" % logic, con=engine)
                     #dynamicPK = list(return_df)
@@ -173,7 +174,7 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                     print "Total Rows:" + str(rowCount.iloc[0]['count'])
 
                     query = 'SELECT * FROM {} ;'.format(targetTable[0])
-                    return_df = create_chunk(rowCount, query, engine)
+                    return_df = create_chunk(rowCount.iloc[0]['count'], query, engine)
 
                     #print("Total Rows:" + str(pd.read_sql("SELECT COUNT(*) FROM {};".format(targetTable[0]), con=engine)))
                     #return_df = pd.read_sql("SELECT * FROM {} ;".format(targetTable[0]), con=engine)
@@ -197,10 +198,10 @@ def create_dataframe(engine, primaryKey, targetTable, logic=''):
                     ddl_dict = insp.get_columns(targetTable[1], schema=targetTable[0])
                     rowCount = pd.read_sql("SELECT COUNT(*) FROM {}.{} ;".format(targetTable[0],
                                                                         targetTable[1]), con=engine)
-                    print("Total Rows:"+ str(rowCount.iloc[0]))
+                    print("Total Rows:"+ str(rowCount.iloc[0]['count']))
 
                     query = 'SELECT * FROM {}.{} ;'.format(targetTable[0], targetTable[1])
-                    return_df = create_chunk(rowCount,query,engine)
+                    return_df = create_chunk(rowCount.iloc[0]['count'],query,engine)
 
                     # return_df = pd.read_sql(
                     #     "SELECT * FROM {}.{} ;".format(targetTable[0], targetTable[1]), con=engine)
@@ -251,7 +252,8 @@ def verify_data(test_data, testcase_id):
 def create_chunk(rowCount,query,engine):
     try:
         start = time.clock()
-        lines_number = rowCount.iloc[0]['count']
+        lines_number = rowCount
+        print lines_number
         if lines_number >= 50000 and lines_number <= 500000:
             lines_in_chunk = int(round(lines_number/5))
             print 'Chunck Data with {} lines'.format(lines_in_chunk)
@@ -276,7 +278,7 @@ def create_chunk(rowCount,query,engine):
 
             if new_completed > completed:
                 completed = new_completed
-                print "Completed", completed, "%"
+                print "Completed", completed,"%"
             index += 1
 
         end = time.clock()

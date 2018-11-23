@@ -7,7 +7,7 @@ import sys
 import inspect as ins
 
 
-def check_null(column_name, testcase_id, target_df, pathname):
+def check_null(column_name, testcase_id, target_df, pathname, tablesourcetarget):
     try:
         df = target_df
         nan_rows = pd.DataFrame()

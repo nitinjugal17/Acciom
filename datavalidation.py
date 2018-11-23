@@ -111,7 +111,7 @@ def has_change(row):
         return "N"
 
 
-def df_comparison(testcase_id, tc_id_data, source_df, target_df, pathname):
+def df_comparison(testcase_id, tc_id_data, source_df, target_df, pathname, tablesourcetarget):
     try:
         book = load_workbook(pathname)
         writer = pd.ExcelWriter(pathname)

@@ -45,7 +45,9 @@ def select_testcases(df_testcases, pathname):
         #frame.SetSize(0, 0, 200, 50)
 
         df['Test Case'] = df_testcases['Test Case ID'].astype(str) + '_' + df_testcases['Test Class']
-        test_list = df['Test Case']
+        test_list = df['Test Case'].tolist()
+
+
 
         dlg = SelectAll(None, "Pick The TestCases To Be Executed",
                                    "Acciom", choices=test_list)
@@ -53,7 +55,7 @@ def select_testcases(df_testcases, pathname):
         if dlg.ShowModal() == wx.ID_OK:
             selections = dlg.GetSelections()
             strings = [test_list[x] for x in selections]
-            wx.MessageBox(str(strings) + ' were chosen')
+            #wx.MessageBox(str(strings) + ' were chosen')
             print "You chose TestCases:" + str(strings)
             # calling create results sheet function to create sheet prior to execution
             # for string in strings:
